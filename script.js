@@ -16,7 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const nameCell = document.createElement('td');
         const nameLink = document.createElement('a');
-        nameLink.href = coin.url;
+        
+        // Build the full URL for the coin page
+        const coinUrl = `https://www.coingecko.com/en/coins/${coin.id}`;
+        
+        // Set the link properties
+        nameLink.href = coinUrl;
         nameLink.target = '_blank';
         nameLink.textContent = coin.name;
         nameCell.appendChild(nameLink);
