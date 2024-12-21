@@ -1,15 +1,21 @@
 // Your CryptoCompare API Key (replace with your actual API key)
-const apiKey = 'YOUR_CRYPTOCOMPARE_API_KEY'; 
+const apiKey = 'YOUR_CRYPTOCOMPARE_API_KEY';
 
 // Fetch Bitcoin data from CryptoCompare API
 const fetchData = async () => {
     const url = 'https://min-api.cryptocompare.com/data/v2/histoday';
+    
+    // Set start date to December 1, 2020 (timestamp: 1606780800) and end date to March 31, 2021 (timestamp: 1617148800)
+    const fromTs = 1606780800; // Dec 1, 2020
+    const toTs = 1617148800;   // Mar 31, 2021
     const params = new URLSearchParams({
         fsym: 'BTC', // Symbol for Bitcoin
         tsym: 'USD', // Convert to USD
-        toTs: '1617148800', // End of March 2021 timestamp
-        limit: 2000, // Limit to 2000 data points
-        e: 'CCCAGG', // Data source
+        toTs: toTs,  // End of March 2021 timestamp
+        limit: 2000,  // Limit to 2000 data points
+        e: 'CCCAGG',  // Data source
+        to: toTs,     // To the specified end date
+        extraParams: 'yourAppName' // Optional app name for rate limiting (replace with your app name)
     });
 
     try {
