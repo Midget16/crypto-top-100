@@ -3,171 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Analysis Platform</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/technicalindicators"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 1em 0;
-        }
-        .container {
-            padding: 20px;
-        }
-        .chart-container {
-            width: 80%;
-            margin: auto;
-        }
-        .controls {
-            margin: 20px auto;
-            text-align: center;
-        }
-        select, button, input {
-            margin: 5px;
-            padding: 8px;
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-top: 10px;
-        }
-    </style>
+    <title>Advanced Bitcoin Price History</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@material-ui/core@4.12.3/dist/material-ui.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>Crypto Technical Analysis & Predictions</h1>
+    <header class="header">
+        <h1>Bitcoin Price History: Dec 2020 - Mar 2021</h1>
     </header>
-    <div class="container">
-        <div class="controls">
-            <h3>Select Cryptocurrency and Indicators</h3>
-            <select id="crypto"></select>
-            <label for="indicator">Indicator:</label>
-            <select id="indicator">
-                <option value="sma">SMA</option>
-                <option value="ema">EMA</option>
-                <option value="rsi">RSI</option>
-                <option value="macd">MACD</option>
-            </select>
-            <label for="startDate">Start Date:</label>
-            <input type="date" id="startDate">
-            <label for="endDate">End Date:</label>
-            <input type="date" id="endDate">
-            <button onclick="plotCryptoAnalysis()">Analyze</button>
-            <div class="error-message" id="error-message"></div>
+
+    <main class="main-container">
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
         </div>
+
         <div class="chart-container">
-            <canvas id="cryptoChart"></canvas>
+            <canvas id="bitcoin-chart"></canvas>
         </div>
-    </div>
 
-    <script>
-        let cryptoData = [];
-        let chartInstance = null;
+        <div class="price-table-container">
+            <table id="price-table" class="material-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Price (USD)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
 
-        async function fetchCryptoData() {
-            try {
-                const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
-                    params: {
-                        vs_currency: 'usd',
-                        order: 'market_cap_desc',
-                        per_page: 100,
-                        page: 1
-                    }
-                });
-                cryptoData = response.data;
-                populateDropdown();
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('error-message').innerText = 'Error fetching cryptocurrency list.';
-            }
-        }
+    <footer class="footer">
+        <p>Data provided by <a href="https://www.coingecko.com/" target="_blank">CoinGecko</a></p>
+    </footer>
 
-        function populateDropdown() {
-            const crypto = document.getElementById('crypto');
-            cryptoData.forEach(coin => {
-                const option = new Option(coin.name, coin.id);
-                crypto.add(option);
-            });
-        }
-
-        async function plotCryptoAnalysis() {
-            const cryptoId = document.getElementById('crypto').value;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const indicator = document.getElementById('indicator').value;
-
-            const errorMsg = document.getElementById('error-message');
-            errorMsg.innerText = '';
-
-            if (!cryptoId || !startDate || !endDate) {
-                errorMsg.innerText = 'Please select cryptocurrency and valid date range.';
-                return;
-            }
-
-            const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
-            const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
-
-            if (endTimestamp <= startTimestamp) {
-                errorMsg.innerText = 'End date must be after start date.';
-                return;
-            }
-
-            const apiUrl = `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart/range?vs_currency=usd&from=${startTimestamp}&to=${endTimestamp}`;
-            console.log('API URL:', apiUrl);
-
-            try {
-                const response = await axios.get(apiUrl);
-                console.log('API Response:', response.data);
-
-                const labels = response.data.prices.map(item => new Date(item[0]).toLocaleDateString());
-                const data = response.data.prices.map(item => item[1]);
-
-                let indicatorData = new Array(data.length).fill(null);
-                if (indicator === 'sma' && data.length >= 5) {
-                    const sma = technicalindicators.SMA.calculate({period: 5, values: data});
-                    indicatorData = alignData(data, sma, 5);
-                } else if (indicator === 'ema' && data.length >= 5) {
-                    const ema = technicalindicators.EMA.calculate({period: 5, values: data});
-                    indicatorData = alignData(data, ema, 5);
-                } else if (indicator === 'rsi' && data.length >= 14) {
-                    const rsi = technicalindicators.RSI.calculate({period: 14, values: data});
-                    indicatorData = alignData(data, rsi, 14);
-                } else if (indicator === 'macd' && data.length >= 26) {
-                    const macd = technicalindicators.MACD.calculate({
-                        values: data,
-                        fastPeriod: 12,
-                        slowPeriod: 26,
-                        signalPeriod: 9,
-                        SimpleMAOscillator: false,
-                        SimpleMASignal: false
-                    }).map(item => item.MACD);
-                    indicatorData = alignData(data, macd, 26);
-                }
-
-                renderChart(labels, data, indicatorData, cryptoId, indicator);
-            } catch (error) {
-                console.error('Error fetching historical data:', error);
-                errorMsg.innerText = 'Failed to fetch data. Check the console for details.';
-            }
-        }
-
-        function alignData(data, indicatorValues, offset) {
-            let alignedData = new Array(data.length).fill(null);
-            for (let i = 0; i < indicatorValues.length; i++) {
-                alignedData[i + offset - 1] = indicatorValues[i];
-            }
-            return alignedData;
-        }
-
-        fetchCryptoData();
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
