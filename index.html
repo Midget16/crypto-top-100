@@ -97,8 +97,8 @@
             const endDate = document.getElementById('endDate').value;
             const indicator = document.getElementById('indicator').value;
 
-            if (!startDate || !endDate) {
-                alert('Please select both start and end dates.');
+            if (!cryptoId || !startDate || !endDate) {
+                alert('Please select cryptocurrency and valid date range.');
                 return;
             }
 
@@ -114,15 +114,18 @@
                 const labels = response.data.prices.map(item => new Date(item[0]).toLocaleDateString());
                 const data = response.data.prices.map(item => item[1]);
 
-                let indicatorData = [];
+                let indicatorData = new Array(data.length).fill(null);
                 if (indicator === 'sma') {
-                    indicatorData = technicalindicators.SMA.calculate({period: 5, values: data});
+                    const sma = technicalindicators.SMA.calculate({period: 5, values: data});
+                    indicatorData.splice(5, sma.length, ...sma);
                 } else if (indicator === 'ema') {
-                    indicatorData = technicalindicators.EMA.calculate({period: 5, values: data});
+                    const ema = technicalindicators.EMA.calculate({period: 5, values: data});
+                    indicatorData.splice(5, ema.length, ...ema);
                 } else if (indicator === 'rsi') {
-                    indicatorData = technicalindicators.RSI.calculate({period: 14, values: data});
+                    const rsi = technicalindicators.RSI.calculate({period: 14, values: data});
+                    indicatorData.splice(14, rsi.length, ...rsi);
                 } else if (indicator === 'macd') {
-                    indicatorData = technicalindicators.MACD.calculate({
+                    const macd = technicalindicators.MACD.calculate({
                         values: data,
                         fastPeriod: 12,
                         slowPeriod: 26,
@@ -130,11 +133,13 @@
                         SimpleMAOscillator: false,
                         SimpleMASignal: false
                     }).map(item => item.MACD);
+                    indicatorData.splice(26, macd.length, ...macd);
                 }
 
                 renderChart(labels, data, indicatorData, cryptoId, indicator);
             } catch (error) {
                 console.error('Error fetching historical data:', error);
+                alert('Failed to fetch data. Please try again.');
             }
         }
 
