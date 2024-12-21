@@ -38,21 +38,34 @@ const fetchData = async (crypto) => {
     }
 };
 
+// Calculate percentage change between consecutive days
+const calculatePercentageChange = (data) => {
+    const percentageChanges = [];
+    for (let i = 1; i < data.length; i++) {
+        const previousPrice = data[i - 1].close;
+        const currentPrice = data[i].close;
+        const percentageChange = ((currentPrice - previousPrice) / previousPrice) * 100;
+        percentageChanges.push(percentageChange);
+    }
+    return percentageChanges;
+};
+
 // Prepare chart data
 const prepareChartData = (data) => {
-    const labels = data.map(item => new Date(item.time * 1000).toLocaleDateString());
-    const prices = data.map(item => item.close);
-    return { labels, prices };
+    const labels = data.map(item => new Date(item.time * 1000).toLocaleDateString()); // Labels (dates)
+    const percentageChanges = calculatePercentageChange(data); // Percentage change for y-axis
+    return { labels, percentageChanges };
 };
 
 // Update charts
 const updateCharts = (cryptosData) => {
-    const labels = cryptosData[0].data.map(item => new Date(item.time * 1000).toLocaleDateString());
+    const labels = cryptosData[0].data.map(item => new Date(item.time * 1000).toLocaleDateString()); // Dates for x-axis
 
     const datasets = cryptosData.map((cryptoData, index) => {
+        const percentageChanges = calculatePercentageChange(cryptoData.data);
         return {
             label: cryptoData.crypto,
-            data: cryptoData.data.map(item => item.close),
+            data: percentageChanges,
             borderColor: getRandomColor(),
             fill: false,
             tension: 0.1,
@@ -62,15 +75,27 @@ const updateCharts = (cryptosData) => {
     const priceChart = new Chart(document.getElementById('price-chart').getContext('2d'), {
         type: 'line',
         data: {
-            labels,
+            labels, // Dates as x-axis
             datasets,
         },
         options: {
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date', // x-axis label
+                    },
+                },
                 y: {
-                    beginAtZero: false,
-                    suggestedMin: Math.min(...cryptosData.map(c => Math.min(...c.data.map(i => i.close)))) * 0.9,
-                    suggestedMax: Math.max(...cryptosData.map(c => Math.max(...c.data.map(i => i.close)))) * 1.1,
+                    title: {
+                        display: true,
+                        text: 'Percentage Change (%)', // y-axis label
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(2) + '%'; // Format y-axis values as percentage
+                        }
+                    },
                 }
             }
         }
