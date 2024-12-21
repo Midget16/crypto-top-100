@@ -1,3 +1,6 @@
+// Your CryptoCompare API Key (replace with your actual API key)
+const apiKey = 'YOUR_CRYPTOCOMPARE_API_KEY'; 
+
 // Fetch Bitcoin data from CryptoCompare API
 const fetchData = async () => {
     const url = 'https://min-api.cryptocompare.com/data/v2/histoday';
@@ -6,14 +9,21 @@ const fetchData = async () => {
         tsym: 'USD', // Convert to USD
         toTs: '1617148800', // End of March 2021 timestamp
         limit: 2000, // Limit to 2000 data points
-        extraParams: 'yourAppName' // Optional app name for rate limiting (replace with your app name)
+        e: 'CCCAGG', // Data source
     });
 
     try {
-        const response = await fetch(`${url}?${params.toString()}`);
+        const response = await fetch(`${url}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Apikey ${apiKey}`, // Include the API key in the header
+            }
+        });
+
         if (!response.ok) {
             throw new Error('Failed to fetch data');
         }
+
         const data = await response.json();
         console.log('Data fetched successfully:', data);  // Add this for debugging
         return data.Data.Data; // Access the historical data
