@@ -3,48 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Bitcoin Price History</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Crypto Stats Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@material-ui/core@4.12.3/dist/material-ui.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        select, input {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .controls select, .controls input {
+            margin-right: 20px;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+        }
+        .stat-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 30%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <header class="header">
-        <h1>Bitcoin Price History: Dec 2020 - Mar 2021</h1>
+    <header>
+        <h1>Crypto Stats Dashboard</h1>
+        <p>Compare cryptos like a pro</p>
     </header>
+    <div class="controls">
+        <select id="crypto-select">
+            <option value="bitcoin">Bitcoin</option>
+            <option value="solana">Solana</option>
+            <option value="dogecoin">Dogecoin</option>
+            <option value="pepe">Pepe</option>
+            <option value="xrp">XRP</option>
+            <option value="ethereum">Ethereum</option>
+        </select>
+        <input type="date" id="start-date" />
+        <input type="date" id="end-date" />
+        <button onclick="loadData()">Load Data</button>
+    </div>
 
-    <main class="main-container">
-        <div id="loading-spinner" class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Loading data...</p>
+    <div class="chart-container">
+        <canvas id="price-chart"></canvas>
+        <canvas id="volume-chart"></canvas>
+        <canvas id="percent-change-chart"></canvas>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <h3>Market Cap</h3>
+            <p id="market-cap">Loading...</p>
         </div>
-
-        <div class="chart-container">
-            <canvas id="bitcoin-chart"></canvas>
+        <div class="stat-box">
+            <h3>Total Supply</h3>
+            <p id="total-supply">Loading...</p>
         </div>
-
-        <div class="price-table-container">
-            <table id="price-table" class="material-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Price (USD)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be injected here -->
-                </tbody>
-            </table>
+        <div class="stat-box">
+            <h3>24H Volume</h3>
+            <p id="volume">Loading...</p>
         </div>
-    </main>
+    </div>
 
-    <footer class="footer">
-        <p>Data provided by <a href="https://www.coingecko.com/" target="_blank">CoinGecko</a></p>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
