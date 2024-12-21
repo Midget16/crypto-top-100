@@ -1,87 +1,135 @@
-// Your CryptoCompare API Key (replace with your actual API key)
-const apiKey = 'YOUR_CRYPTOCOMPARE_API_KEY';
+const apiKey = 'YOUR_CRYPTOCOMPARE_API_KEY';  // Replace with your API key
 
-// Fetch Bitcoin data from CryptoCompare API
-const fetchData = async (fromTs, toTs) => {
-    const url = 'https://min-api.cryptocompare.com/data/v2/histoday';
+// Map cryptocurrency symbols to their respective API endpoints
+const cryptoSymbols = {
+    'bitcoin': 'BTC',
+    'solana': 'SOL',
+    'dogecoin': 'DOGE',
+    'pepe': 'PEPE',
+    'xrp': 'XRP',
+    'ethereum': 'ETH',
+};
 
-    const params = new URLSearchParams({
-        fsym: 'BTC', // Symbol for Bitcoin
-        tsym: 'USD', // Convert to USD
-        toTs: toTs,  // End date (March 31, 2021)
-        limit: 2000,  // Limit to 2000 data points (could adjust based on data)
-        e: 'CCCAGG',  // Data source
-    });
+let selectedCrypto = 'bitcoin';
+let startDate = '2020-12-01';
+let endDate = '2021-03-31';
+
+// Fetching data from CryptoCompare
+const fetchData = async (crypto, start, end) => {
+    const startTs = new Date(start).getTime() / 1000;
+    const endTs = new Date(end).getTime() / 1000;
+
+    const url = `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${cryptoSymbols[crypto]}&tsym=USD&toTs=${endTs}&limit=2000`;
 
     try {
-        const response = await fetch(`${url}?${params.toString()}`, {
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'Authorization': `Apikey ${apiKey}`, // Include the API key in the header
+                'Authorization': `Apikey ${apiKey}`,
             }
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch data');
-        }
-
+        if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();
-        return data.Data.Data; // Return the historical data
+        return data.Data.Data;
     } catch (error) {
         console.error('Error fetching data:', error);
         return [];
     }
 };
 
-// Convert UNIX timestamp to a readable date
-const formatDate = timestamp => {
-    const date = new Date(timestamp * 1000);  // Convert seconds to milliseconds
-    return date.toLocaleDateString();
+// Prepare chart data
+const prepareChartData = (data) => {
+    const labels = data.map(item => new Date(item.time * 1000).toLocaleDateString());
+    const prices = data.map(item => item.close);
+    const volumes = data.map(item => item.volumefrom);
+    const percentChanges = data.map((item, index, arr) => {
+        if (index === 0) return 0;
+        return ((item.close - arr[index - 1].close) / arr[index - 1].close) * 100;
+    });
+
+    return { labels, prices, volumes, percentChanges };
 };
 
-// Display Bitcoin price chart
-const displayChart = (data) => {
-    const ctx = document.getElementById('bitcoin-chart').getContext('2d');
-    const dates = data.map(item => formatDate(item.time));
-    const prices = data.map(item => item.close);
+// Update charts
+const updateCharts = (data) => {
+    const { labels, prices, volumes, percentChanges } = prepareChartData(data);
 
-    new Chart(ctx, {
+    const priceChart = new Chart(document.getElementById('price-chart').getContext('2d'), {
         type: 'line',
         data: {
-            labels: dates,
+            labels,
             datasets: [{
-                label: 'Bitcoin Price (USD)',
+                label: 'Price (USD)',
                 data: prices,
-                fill: false,
                 borderColor: '#4CAF50',
+                fill: false,
                 tension: 0.1,
             }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    ticks: { autoSkip: true, maxTicksLimit: 10 },
-                },
-                y: {
-                    beginAtZero: false,
-                }
-            }
+        }
+    });
+
+    const volumeChart = new Chart(document.getElementById('volume-chart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Volume',
+                data: volumes,
+                backgroundColor: '#FF9800',
+                borderColor: '#FF9800',
+                borderWidth: 1,
+            }]
+        }
+    });
+
+    const percentChangeChart = new Chart(document.getElementById('percent-change-chart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Percent Change',
+                data: percentChanges,
+                borderColor: '#2196F3',
+                fill: false,
+                tension: 0.1,
+            }]
         }
     });
 };
 
-// Display data in the table
-const displayTable = async () => {
-    const prices = await fetchData(1606780800, 1617148800); // Request data between Dec 1, 2020 and Mar 31, 2021
-    if (prices.length === 0) {
-        document.querySelector('#price-table tbody').innerHTML = '<tr><td colspan="2">No data available</td></tr>';
+// Update stats section
+const updateStats = (crypto) => {
+    // Fetch stats like market cap, total supply, etc. from a relevant API (e.g., CoinGecko, CoinMarketCap)
+    // Example using CoinGecko (replace with actual implementation):
+    const url = `https://api.coingecko.com/api/v3/coins/${cryptoSymbols[crypto]}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('market-cap').textContent = `$${data.market_data.market_cap.usd.toLocaleString()}`;
+            document.getElementById('total-supply').textContent = data.market_data.total_supply.toLocaleString();
+            document.getElementById('volume').textContent = `$${data.market_data.total_volume.usd.toLocaleString()}`;
+        })
+        .catch(err => console.error("Error fetching stats:", err));
+};
+
+// Load data based on selected crypto and date range
+const loadData = async () => {
+    selectedCrypto = document.getElementById('crypto-select').value;
+    startDate = document.getElementById('start-date').value;
+    endDate = document.getElementById('end-date').value;
+
+    if (!startDate || !endDate) {
+        alert("Please select both start and end dates.");
         return;
     }
 
-    const tableBody = document.querySelector("#price-table tbody");
-    prices.forEach(item => {
-        const row = document.createElement('tr');
-        const dateCell = document.createElement('td');
-        const priceCell = document.createElement('td');
-   
+    // Fetch data for the selected cryptocurrency
+    const data = await fetchData(selectedCrypto, startDate, endDate);
+    updateCharts(data);
+    updateStats(selectedCrypto);
+};
+
+window.onload = () => {
+    loadData();  // Load default data on page load
+};
