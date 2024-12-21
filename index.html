@@ -56,7 +56,7 @@
         <p>Compare cryptos like a pro</p>
     </header>
     <div class="controls">
-        <select id="crypto-select">
+        <select id="crypto-select" multiple>
             <option value="bitcoin">Bitcoin</option>
             <option value="solana">Solana</option>
             <option value="dogecoin">Dogecoin</option>
@@ -64,15 +64,11 @@
             <option value="xrp">XRP</option>
             <option value="ethereum">Ethereum</option>
         </select>
-        <input type="date" id="start-date" />
-        <input type="date" id="end-date" />
         <button id="load-data-btn">Load Data</button>
     </div>
 
     <div class="chart-container">
         <canvas id="price-chart"></canvas>
-        <canvas id="volume-chart"></canvas>
-        <canvas id="percent-change-chart"></canvas>
     </div>
 
     <div class="stats-container">
