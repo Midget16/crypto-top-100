@@ -29,7 +29,7 @@
             margin: 20px auto;
             text-align: center;
         }
-        select, button {
+        select, button, input {
             margin: 5px;
             padding: 8px;
         }
@@ -41,13 +41,12 @@
     </header>
     <div class="container">
         <div class="controls">
-            <h3>Select Cryptocurrency and Time Period</h3>
+            <h3>Select Cryptocurrency and Date Range</h3>
             <select id="crypto"></select>
-            <select id="timePeriod">
-                <option value="1">1 Day</option>
-                <option value="7">7 Days</option>
-                <option value="30">30 Days</option>
-            </select>
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate">
             <button onclick="plotCryptoChange()">Plot</button>
         </div>
         <div class="chart-container">
@@ -87,14 +86,20 @@
 
         async function plotCryptoChange() {
             const cryptoId = document.getElementById('crypto').value;
-            const timePeriod = document.getElementById('timePeriod').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates.');
+                return;
+            }
 
             try {
-                const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart`, {
+                const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart/range`, {
                     params: {
                         vs_currency: 'usd',
-                        days: timePeriod,
-                        interval: 'daily'
+                        from: new Date(startDate).getTime() / 1000,
+                        to: new Date(endDate).getTime() / 1000
                     }
                 });
 
