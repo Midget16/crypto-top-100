@@ -3,90 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Stats Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <title>Crypto Stats</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: #f4f4f4;
         }
-        header {
-            text-align: center;
-            margin-bottom: 30px;
+        h1 {
+            margin-bottom: 20px;
         }
-        select, input {
-            padding: 10px;
-            font-size: 16px;
-            margin: 10px;
+        #crypto-select {
+            margin-bottom: 20px;
         }
-        .controls {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+        #load-data-btn {
+            margin-bottom: 20px;
         }
-        .controls select, .controls input {
-            margin-right: 20px;
+        canvas {
+            max-width: 100%;
+            height: 400px;
         }
-        .chart-container {
-            width: 80%;
-            margin: 0 auto;
-        }
-        .stats-container {
-            display: flex;
-            justify-content: space-around;
+        .stats {
             margin-top: 30px;
-        }
-        .stat-box {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            width: 30%;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
             text-align: center;
+        }
+        .stats h3 {
+            margin-bottom: 10px;
+        }
+        .stats p {
+            font-size: 14px;
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Crypto Stats Dashboard</h1>
-        <p>Compare cryptos like a pro</p>
-    </header>
-    <div class="controls">
-        <select id="crypto-select" multiple>
-            <option value="bitcoin">Bitcoin</option>
-            <option value="solana">Solana</option>
-            <option value="dogecoin">Dogecoin</option>
-            <option value="pepe">Pepe</option>
-            <option value="xrp">XRP</option>
-            <option value="ethereum">Ethereum</option>
-        </select>
-        <button id="load-data-btn">Load Data</button>
-    </div>
 
-    <div class="chart-container">
-        <canvas id="price-chart"></canvas>
-    </div>
+<h1>Cryptocurrency Stats</h1>
 
-    <div class="stats-container">
-        <div class="stat-box">
-            <h3>Market Cap</h3>
-            <p id="market-cap">Loading...</p>
-        </div>
-        <div class="stat-box">
-            <h3>Total Supply</h3>
-            <p id="total-supply">Loading...</p>
-        </div>
-        <div class="stat-box">
-            <h3>24H Volume</h3>
-            <p id="volume">Loading...</p>
-        </div>
-    </div>
+<!-- Dropdown for selecting cryptos -->
+<select id="crypto-select" multiple>
+    <option value="bitcoin">Bitcoin</option>
+    <option value="solana">Solana</option>
+    <option value="dogecoin">Dogecoin</option>
+    <option value="pepe">Pepe</option>
+    <option value="xrp">XRP</option>
+    <option value="ethereum">Ethereum</option>
+</select>
 
-    <!-- Place the script tag just before the closing body tag to ensure it's loaded after the DOM -->
-    <script src="script.js"></script>
+<button id="load-data-btn">Load Data</button>
+
+<!-- Canvas for displaying the chart -->
+<canvas id="price-chart"></canvas>
+
+<!-- Stats section -->
+<div class="stats">
+    <h3>Crypto Stats</h3>
+    <p><strong>Market Cap:</strong> <span id="market-cap">Loading...</span></p>
+    <p><strong>Total Supply:</strong> <span id="total-supply">Loading...</span></p>
+    <p><strong>Volume:</strong> <span id="volume">Loading...</span></p>
+</div>
+
+<script src="script.js"></script>
+
 </body>
 </html>
