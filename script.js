@@ -1,14 +1,22 @@
-// Fetch Bitcoin data from CoinGecko API
+// Fetch Bitcoin data from CryptoCompare API
 const fetchData = async () => {
-    const url = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=1606780800&to=1617148800'; // Dec 2020 to Mar 2021
+    const url = 'https://min-api.cryptocompare.com/data/v2/histoday';
+    const params = new URLSearchParams({
+        fsym: 'BTC', // Symbol for Bitcoin
+        tsym: 'USD', // Convert to USD
+        toTs: '1617148800', // End of March 2021 timestamp
+        limit: 2000, // Limit to 2000 data points
+        extraParams: 'yourAppName' // Optional app name for rate limiting (replace with your app name)
+    });
+
     try {
-        const response = await fetch(url);
+        const response = await fetch(`${url}?${params.toString()}`);
         if (!response.ok) {
             throw new Error('Failed to fetch data');
         }
         const data = await response.json();
         console.log('Data fetched successfully:', data);  // Add this for debugging
-        return data.prices;
+        return data.Data.Data; // Access the historical data
     } catch (error) {
         console.error('Error fetching data:', error);
         return [];
@@ -17,15 +25,15 @@ const fetchData = async () => {
 
 // Convert UNIX timestamp to a readable date
 const formatDate = timestamp => {
-    const date = new Date(timestamp);
+    const date = new Date(timestamp * 1000);  // Convert seconds to milliseconds
     return date.toLocaleDateString();
 };
 
 // Display Bitcoin price chart
 const displayChart = (data) => {
     const ctx = document.getElementById('bitcoin-chart').getContext('2d');
-    const dates = data.map(([timestamp]) => formatDate(timestamp));
-    const prices = data.map(([_, price]) => price);
+    const dates = data.map(item => formatDate(item.time));
+    const prices = data.map(item => item.close);
 
     new Chart(ctx, {
         type: 'line',
@@ -62,13 +70,13 @@ const displayTable = async () => {
     }
 
     const tableBody = document.querySelector("#price-table tbody");
-    prices.forEach(([timestamp, price]) => {
+    prices.forEach(item => {
         const row = document.createElement('tr');
         const dateCell = document.createElement('td');
         const priceCell = document.createElement('td');
         
-        dateCell.textContent = formatDate(timestamp);
-        priceCell.textContent = `$${price.toFixed(2)}`;
+        dateCell.textContent = formatDate(item.time);
+        priceCell.textContent = `$${item.close.toFixed(2)}`;
         
         row.appendChild(dateCell);
         row.appendChild(priceCell);
