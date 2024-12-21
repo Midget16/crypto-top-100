@@ -2,20 +2,15 @@
 const apiKey = 'YOUR_CRYPTOCOMPARE_API_KEY';
 
 // Fetch Bitcoin data from CryptoCompare API
-const fetchData = async () => {
+const fetchData = async (fromTs, toTs) => {
     const url = 'https://min-api.cryptocompare.com/data/v2/histoday';
-    
-    // Set start date to December 1, 2020 (timestamp: 1606780800) and end date to March 31, 2021 (timestamp: 1617148800)
-    const fromTs = 1606780800; // Dec 1, 2020
-    const toTs = 1617148800;   // Mar 31, 2021
+
     const params = new URLSearchParams({
         fsym: 'BTC', // Symbol for Bitcoin
         tsym: 'USD', // Convert to USD
-        toTs: toTs,  // End of March 2021 timestamp
-        limit: 2000,  // Limit to 2000 data points
+        toTs: toTs,  // End date (March 31, 2021)
+        limit: 2000,  // Limit to 2000 data points (could adjust based on data)
         e: 'CCCAGG',  // Data source
-        to: toTs,     // To the specified end date
-        extraParams: 'yourAppName' // Optional app name for rate limiting (replace with your app name)
     });
 
     try {
@@ -31,8 +26,7 @@ const fetchData = async () => {
         }
 
         const data = await response.json();
-        console.log('Data fetched successfully:', data);  // Add this for debugging
-        return data.Data.Data; // Access the historical data
+        return data.Data.Data; // Return the historical data
     } catch (error) {
         console.error('Error fetching data:', error);
         return [];
@@ -79,7 +73,7 @@ const displayChart = (data) => {
 
 // Display data in the table
 const displayTable = async () => {
-    const prices = await fetchData();
+    const prices = await fetchData(1606780800, 1617148800); // Request data between Dec 1, 2020 and Mar 31, 2021
     if (prices.length === 0) {
         document.querySelector('#price-table tbody').innerHTML = '<tr><td colspan="2">No data available</td></tr>';
         return;
@@ -90,38 +84,4 @@ const displayTable = async () => {
         const row = document.createElement('tr');
         const dateCell = document.createElement('td');
         const priceCell = document.createElement('td');
-        
-        dateCell.textContent = formatDate(item.time);
-        priceCell.textContent = `$${item.close.toFixed(2)}`;
-        
-        row.appendChild(dateCell);
-        row.appendChild(priceCell);
-        tableBody.appendChild(row);
-    });
-};
-
-// Handle loading spinner visibility
-const showLoading = () => {
-    document.getElementById('loading-spinner').style.display = 'flex';
-};
-
-const hideLoading = () => {
-    document.getElementById('loading-spinner').style.display = 'none';
-};
-
-// Initialize page
-const initialize = async () => {
-    showLoading();
-    const prices = await fetchData();
-    hideLoading();
-
-    if (prices.length === 0) {
-        alert("Failed to load data.");
-    } else {
-        displayChart(prices);
-        displayTable();
-    }
-};
-
-// Call the initialization function once the page loads
-window.onload = initialize;
+   
