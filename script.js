@@ -10,14 +10,14 @@ const cryptoSymbols = {
     'ethereum': 'ETH',
 };
 
-let selectedCrypto = 'bitcoin';
-let startDate = '2020-12-01';
-let endDate = '2021-03-31';
+// Fixed date range: December 1, 2020 to March 31, 2021
+const startDate = '2020-12-01';
+const endDate = '2021-03-31';
 
 // Fetching data from CryptoCompare
-const fetchData = async (crypto, start, end) => {
-    const startTs = new Date(start).getTime() / 1000;
-    const endTs = new Date(end).getTime() / 1000;
+const fetchData = async (crypto) => {
+    const startTs = new Date(startDate).getTime() / 1000;
+    const endTs = new Date(endDate).getTime() / 1000;
 
     const url = `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${cryptoSymbols[crypto]}&tsym=USD&toTs=${endTs}&limit=2000`;
 
@@ -42,60 +42,49 @@ const fetchData = async (crypto, start, end) => {
 const prepareChartData = (data) => {
     const labels = data.map(item => new Date(item.time * 1000).toLocaleDateString());
     const prices = data.map(item => item.close);
-    const volumes = data.map(item => item.volumefrom);
-    const percentChanges = data.map((item, index, arr) => {
-        if (index === 0) return 0;
-        return ((item.close - arr[index - 1].close) / arr[index - 1].close) * 100;
-    });
-
-    return { labels, prices, volumes, percentChanges };
+    return { labels, prices };
 };
 
 // Update charts
-const updateCharts = (data) => {
-    const { labels, prices, volumes, percentChanges } = prepareChartData(data);
+const updateCharts = (cryptosData) => {
+    const labels = cryptosData[0].data.map(item => new Date(item.time * 1000).toLocaleDateString());
+
+    const datasets = cryptosData.map((cryptoData, index) => {
+        return {
+            label: cryptoData.crypto,
+            data: cryptoData.data.map(item => item.close),
+            borderColor: getRandomColor(),
+            fill: false,
+            tension: 0.1,
+        };
+    });
 
     const priceChart = new Chart(document.getElementById('price-chart').getContext('2d'), {
         type: 'line',
         data: {
             labels,
-            datasets: [{
-                label: 'Price (USD)',
-                data: prices,
-                borderColor: '#4CAF50',
-                fill: false,
-                tension: 0.1,
-            }]
+            datasets,
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    suggestedMin: Math.min(...cryptosData.map(c => Math.min(...c.data.map(i => i.close)))) * 0.9,
+                    suggestedMax: Math.max(...cryptosData.map(c => Math.max(...c.data.map(i => i.close)))) * 1.1,
+                }
+            }
         }
     });
+};
 
-    const volumeChart = new Chart(document.getElementById('volume-chart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Volume',
-                data: volumes,
-                backgroundColor: '#FF9800',
-                borderColor: '#FF9800',
-                borderWidth: 1,
-            }]
-        }
-    });
-
-    const percentChangeChart = new Chart(document.getElementById('percent-change-chart').getContext('2d'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Percent Change',
-                data: percentChanges,
-                borderColor: '#2196F3',
-                fill: false,
-                tension: 0.1,
-            }]
-        }
-    });
+// Random color generator for line charts
+const getRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
 };
 
 // Update stats section
@@ -113,21 +102,23 @@ const updateStats = (crypto) => {
         .catch(err => console.error("Error fetching stats:", err));
 };
 
-// Load data based on selected crypto and date range
+// Load data based on selected crypto(s)
 const loadData = async () => {
-    selectedCrypto = document.getElementById('crypto-select').value;
-    startDate = document.getElementById('start-date').value;
-    endDate = document.getElementById('end-date').value;
-
-    if (!startDate || !endDate) {
-        alert("Please select both start and end dates.");
+    const selectedCryptos = Array.from(document.getElementById('crypto-select').selectedOptions).map(option => option.value);
+    
+    if (selectedCryptos.length === 0) {
+        alert("Please select at least one cryptocurrency.");
         return;
     }
 
-    // Fetch data for the selected cryptocurrency
-    const data = await fetchData(selectedCrypto, startDate, endDate);
-    updateCharts(data);
-    updateStats(selectedCrypto);
+    // Fetch data for the selected cryptocurrencies
+    const cryptosData = await Promise.all(selectedCryptos.map(async (crypto) => {
+        const data = await fetchData(crypto);
+        return { crypto, data };
+    }));
+
+    updateCharts(cryptosData);
+    updateStats(selectedCryptos[0]); // Update stats for the first selected crypto
 };
 
 // Initialize
