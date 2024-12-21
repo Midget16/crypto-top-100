@@ -85,7 +85,74 @@ const updateCharts = (cryptosData) => {
                         display: true,
                         text: 'Date', // x-axis label
                     },
+                    ticks: {
+                        // Reduce the number of labels on the x-axis (show every 5th day)
+                        autoSkip: true,
+                        maxTicksLimit: 20,
+                    },
                 },
                 y: {
                     title: {
-                 
+                        display: true,
+                        text: 'Percentage Change (%)', // y-axis label
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(2) + '%'; // Format y-axis values as percentage
+                        }
+                    },
+                }
+            }
+        }
+    });
+};
+
+// Random color generator for line charts
+const getRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+};
+
+// Update stats section
+const updateStats = (crypto) => {
+    // Fetch stats like market cap, total supply, etc. from a relevant API (e.g., CoinGecko, CoinMarketCap)
+    // Example using CoinGecko (replace with actual implementation):
+    const url = `https://api.coingecko.com/api/v3/coins/${cryptoSymbols[crypto]}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('market-cap').textContent = `$${data.market_data.market_cap.usd.toLocaleString()}`;
+            document.getElementById('total-supply').textContent = data.market_data.total_supply.toLocaleString();
+            document.getElementById('volume').textContent = `$${data.market_data.total_volume.usd.toLocaleString()}`;
+        })
+        .catch(err => console.error("Error fetching stats:", err));
+};
+
+// Load data based on selected crypto(s)
+const loadData = async () => {
+    const selectedCryptos = Array.from(document.getElementById('crypto-select').selectedOptions).map(option => option.value);
+    
+    if (selectedCryptos.length === 0) {
+        alert("Please select at least one cryptocurrency.");
+        return;
+    }
+
+    // Fetch data for the selected cryptocurrencies
+    const cryptosData = await Promise.all(selectedCryptos.map(async (crypto) => {
+        const data = await fetchData(crypto);
+        return { crypto, data };
+    }));
+
+    updateCharts(cryptosData);
+    updateStats(selectedCryptos[0]); // Update stats for the first selected crypto
+};
+
+// Initialize
+window.onload = () => {
+    document.getElementById('load-data-btn').addEventListener('click', loadData);  // Attach click event to button
+    loadData();  // Load default data on page load
+};
