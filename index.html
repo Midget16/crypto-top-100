@@ -1,37 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Top 100 Cryptocurrencies</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Analysis Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+        }
+        .container {
+            padding: 20px;
+        }
+        .chart-container {
+            width: 80%;
+            margin: auto;
+        }
+        .controls {
+            margin: 20px auto;
+            text-align: center;
+        }
+        select, button {
+            margin: 5px;
+            padding: 8px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Top 100 Cryptocurrencies</h1>
-  </header>
+    <header>
+        <h1>Crypto Statistical & Technical Analysis</h1>
+    </header>
+    <div class="container">
+        <div class="controls">
+            <h3>Select Cryptocurrencies for Comparison</h3>
+            <select id="crypto1"></select>
+            <select id="crypto2"></select>
+            <button onclick="compareCryptos()">Compare</button>
+        </div>
+        <div class="chart-container">
+            <canvas id="cryptoChart"></canvas>
+        </div>
+    </div>
 
-  <section id="crypto-list">
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Name</th>
-          <th>Symbol</th>
-          <th>Price (USD)</th>
-          <th>Market Cap</th>
-          <th>24h Volume</th>
-          <th>Change (24h)</th>
-        </tr>
-      </thead>
-      <tbody id="crypto-data"></tbody>
-    </table>
-  </section>
+    <script>
+        let cryptoData = [];
+        let chartInstance = null;
 
-  <footer>
-    <p>Data provided by <a href="https://www.coingecko.com/en/api" target="_blank">CoinGecko API</a></p>
-  </footer>
+        async function fetchCryptoData() {
+            try {
+                const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
+                    params: {
+                        vs_currency: 'usd',
+                        order: 'market_cap_desc',
+                        per_page: 100,
+                        page: 1,
+                        sparkline: false
+                    }
+                });
+                cryptoData = response.data;
+                populateDropdowns();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
 
-  <script src="script.js"></script>
+        function populateDropdowns() {
+            const crypto1 = document.getElementById('crypto1');
+            const crypto2 = document.getElementById('crypto2');
+            cryptoData.forEach(coin => {
+                const option1 = new Option(coin.name, coin.id);
+                const option2 = new Option(coin.name, coin.id);
+                crypto1.add(option1);
+                crypto2.add(option2);
+            });
+        }
+
+        function compareCryptos() {
+            const crypto1 = document.getElementById('crypto1').value;
+            const crypto2 = document.getElementById('crypto2').value;
+
+            const coin1 = cryptoData.find(coin => coin.id === crypto1);
+            const coin2 = cryptoData.find(coin => coin.id === crypto2);
+
+            const labels = ['24h Change', '7d Change', '30d Change'];
+            const data1 = [coin1.price_change_percentage_24h, coin1.price_change_percentage_7d_in_currency, coin1.price_change_percentage_30d_in_currency];
+            const data2 = [coin2.price_change_percentage_24h, coin2.price_change_percentage_7d_in_currency, coin2.price_change_percentage_30d_in_currency];
+
+            renderChart(labels, data1, data2, coin1.name, coin2.name);
+        }
+
+        function renderChart(labels, data1, data2, name1, name2) {
+            const ctx = document.getElementById('cryptoChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: name1,
+                            data: data1,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                        },
+                        {
+                            label: name2,
+                            data: data2,
+                            backgroundColor: 'rgba(153, 102, 255, 0.6)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+
+        fetchCryptoData();
+    </script>
 </body>
 </html>
