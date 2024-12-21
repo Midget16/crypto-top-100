@@ -115,16 +115,16 @@
                 const data = response.data.prices.map(item => item[1]);
 
                 let indicatorData = new Array(data.length).fill(null);
-                if (indicator === 'sma') {
+                if (indicator === 'sma' && data.length >= 5) {
                     const sma = technicalindicators.SMA.calculate({period: 5, values: data});
-                    indicatorData.splice(5, sma.length, ...sma);
-                } else if (indicator === 'ema') {
+                    indicatorData = alignData(data, sma, 5);
+                } else if (indicator === 'ema' && data.length >= 5) {
                     const ema = technicalindicators.EMA.calculate({period: 5, values: data});
-                    indicatorData.splice(5, ema.length, ...ema);
-                } else if (indicator === 'rsi') {
+                    indicatorData = alignData(data, ema, 5);
+                } else if (indicator === 'rsi' && data.length >= 14) {
                     const rsi = technicalindicators.RSI.calculate({period: 14, values: data});
-                    indicatorData.splice(14, rsi.length, ...rsi);
-                } else if (indicator === 'macd') {
+                    indicatorData = alignData(data, rsi, 14);
+                } else if (indicator === 'macd' && data.length >= 26) {
                     const macd = technicalindicators.MACD.calculate({
                         values: data,
                         fastPeriod: 12,
@@ -133,7 +133,7 @@
                         SimpleMAOscillator: false,
                         SimpleMASignal: false
                     }).map(item => item.MACD);
-                    indicatorData.splice(26, macd.length, ...macd);
+                    indicatorData = alignData(data, macd, 26);
                 }
 
                 renderChart(labels, data, indicatorData, cryptoId, indicator);
@@ -141,6 +141,14 @@
                 console.error('Error fetching historical data:', error);
                 alert('Failed to fetch data. Please try again.');
             }
+        }
+
+        function alignData(data, indicatorValues, offset) {
+            let alignedData = new Array(data.length).fill(null);
+            for (let i = 0; i < indicatorValues.length; i++) {
+                alignedData[i + offset - 1] = indicatorValues[i];
+            }
+            return alignedData;
         }
 
         function renderChart(labels, data, indicatorData, cryptoId, indicator) {
@@ -155,23 +163,15 @@
                             label: `Price of ${cryptoId} over time`,
                             data: data,
                             borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
                             fill: true
                         },
                         {
                             label: `${indicator} Indicator`,
                             data: indicatorData,
                             borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
                             fill: false
                         }
                     ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top' }
-                    }
                 }
             });
         }
