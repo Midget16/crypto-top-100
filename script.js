@@ -1,9 +1,18 @@
 // Fetch Bitcoin data from CoinGecko API
 const fetchData = async () => {
     const url = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=1606780800&to=1617148800'; // Dec 2020 to Mar 2021
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.prices;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Failed to fetch data');
+        }
+        const data = await response.json();
+        console.log('Data fetched successfully:', data);  // Add this for debugging
+        return data.prices;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return [];
+    }
 };
 
 // Convert UNIX timestamp to a readable date
@@ -47,6 +56,11 @@ const displayChart = (data) => {
 // Display data in the table
 const displayTable = async () => {
     const prices = await fetchData();
+    if (prices.length === 0) {
+        document.querySelector('#price-table tbody').innerHTML = '<tr><td colspan="2">No data available</td></tr>';
+        return;
+    }
+
     const tableBody = document.querySelector("#price-table tbody");
     prices.forEach(([timestamp, price]) => {
         const row = document.createElement('tr');
@@ -76,10 +90,14 @@ const initialize = async () => {
     showLoading();
     const prices = await fetchData();
     hideLoading();
-    displayChart(prices);
-    displayTable();
+
+    if (prices.length === 0) {
+        alert("Failed to load data.");
+    } else {
+        displayChart(prices);
+        displayTable();
+    }
 };
 
 // Call the initialization function once the page loads
 window.onload = initialize;
-
