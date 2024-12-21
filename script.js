@@ -130,6 +130,8 @@ const loadData = async () => {
     updateStats(selectedCrypto);
 };
 
+// Initialize
 window.onload = () => {
+    document.getElementById('load-data-btn').addEventListener('click', loadData);  // Attach click event to button
     loadData();  // Load default data on page load
 };
