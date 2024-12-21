@@ -6,6 +6,7 @@
     <title>Crypto Analysis Platform</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/technicalindicators"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -37,17 +38,24 @@
 </head>
 <body>
     <header>
-        <h1>Crypto Statistical & Technical Analysis</h1>
+        <h1>Crypto Technical Analysis & Predictions</h1>
     </header>
     <div class="container">
         <div class="controls">
-            <h3>Select Cryptocurrency and Date Range</h3>
+            <h3>Select Cryptocurrency and Indicators</h3>
             <select id="crypto"></select>
+            <label for="indicator">Indicator:</label>
+            <select id="indicator">
+                <option value="sma">SMA</option>
+                <option value="ema">EMA</option>
+                <option value="rsi">RSI</option>
+                <option value="macd">MACD</option>
+            </select>
             <label for="startDate">Start Date:</label>
             <input type="date" id="startDate">
             <label for="endDate">End Date:</label>
             <input type="date" id="endDate">
-            <button onclick="plotCryptoChange()">Plot</button>
+            <button onclick="plotCryptoAnalysis()">Analyze</button>
         </div>
         <div class="chart-container">
             <canvas id="cryptoChart"></canvas>
@@ -65,8 +73,7 @@
                         vs_currency: 'usd',
                         order: 'market_cap_desc',
                         per_page: 100,
-                        page: 1,
-                        sparkline: true
+                        page: 1
                     }
                 });
                 cryptoData = response.data;
@@ -84,10 +91,11 @@
             });
         }
 
-        async function plotCryptoChange() {
+        async function plotCryptoAnalysis() {
             const cryptoId = document.getElementById('crypto').value;
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
+            const indicator = document.getElementById('indicator').value;
 
             if (!startDate || !endDate) {
                 alert('Please select both start and end dates.');
@@ -106,26 +114,53 @@
                 const labels = response.data.prices.map(item => new Date(item[0]).toLocaleDateString());
                 const data = response.data.prices.map(item => item[1]);
 
-                renderChart(labels, data, cryptoId);
+                let indicatorData = [];
+                if (indicator === 'sma') {
+                    indicatorData = technicalindicators.SMA.calculate({period: 5, values: data});
+                } else if (indicator === 'ema') {
+                    indicatorData = technicalindicators.EMA.calculate({period: 5, values: data});
+                } else if (indicator === 'rsi') {
+                    indicatorData = technicalindicators.RSI.calculate({period: 14, values: data});
+                } else if (indicator === 'macd') {
+                    indicatorData = technicalindicators.MACD.calculate({
+                        values: data,
+                        fastPeriod: 12,
+                        slowPeriod: 26,
+                        signalPeriod: 9,
+                        SimpleMAOscillator: false,
+                        SimpleMASignal: false
+                    }).map(item => item.MACD);
+                }
+
+                renderChart(labels, data, indicatorData, cryptoId, indicator);
             } catch (error) {
                 console.error('Error fetching historical data:', error);
             }
         }
 
-        function renderChart(labels, data, cryptoId) {
+        function renderChart(labels, data, indicatorData, cryptoId, indicator) {
             const ctx = document.getElementById('cryptoChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: `Price of ${cryptoId} over time`,
-                        data: data,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        fill: true
-                    }]
+                    datasets: [
+                        {
+                            label: `Price of ${cryptoId} over time`,
+                            data: data,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            fill: true
+                        },
+                        {
+                            label: `${indicator} Indicator`,
+                            data: indicatorData,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            fill: false
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
